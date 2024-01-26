@@ -6,6 +6,7 @@
 #include <GxEPD2_BW.h>
 #include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
+#include <U8g2_for_Adafruit_GFX.h>
 
 #define SPI_DC 6
 #define SPI_BUSY 11
@@ -18,6 +19,8 @@
 #define BTN_3 8
 #define BTN_4 9
 
+U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
+
 // 2.13'' EPD Module
 GxEPD2_BW<GxEPD2_213_BN, GxEPD2_213_BN::HEIGHT> display1(GxEPD2_213_BN(SPI_CS_1, SPI_DC, -1, SPI_BUSY));
 // GxEPD2_BW<GxEPD2_213_BN, GxEPD2_213_BN::HEIGHT> display2(GxEPD2_213_BN(SPI_CS_2, SPI_DC, -1, SPI_BUSY));
@@ -28,7 +31,8 @@ Button2 button2;
 Button2 button3;
 Button2 button4;
 
-void helloFullScreenPartialMode();
+void fontDemo();
+void drawPage();
 
 void click(Button2& btn) {
     if (btn == button1) {
@@ -62,69 +66,43 @@ void setup()
   button4.setClickHandler(click);
 
   display1.init(115200, true, 50, false);
+  u8g2Fonts.begin(display1); // connect u8g2 procedures to Adafruit GFX
   // display2.init(115200, true, 50, false);
   // display3.init(115200, true, 50, false);
 
-  helloFullScreenPartialMode();
+  fontDemo();
 
   display1.hibernate();
 }
 
-const char HelloWorld[] = "Hello World!";
-
-void helloFullScreenPartialMode()
+void fontDemo()
 {
-  Serial.println("helloFullScreenPartialMode");
-  const char fullscreen[] = "full screen update";
-  const char fpm[] = "fast partial mode";
-  const char spm[] = "slow partial mode";
-  const char npm[] = "no partial mode";
-  display1.setPartialWindow(0, 0, display1.width(), display1.height());
+  display1.setFullWindow();
   display1.setRotation(1);
-  display1.setFont(&FreeMonoBold9pt7b);
-  if (display1.epd2.WIDTH < 104)
-    display1.setFont(0);
-  display1.setTextColor(GxEPD_BLACK);
-  const char *updatemode;
-  if (display1.epd2.hasFastPartialUpdate)
-  {
-    updatemode = fpm;
-  }
-  else if (display1.epd2.hasPartialUpdate)
-  {
-    updatemode = spm;
-  }
-  else
-  {
-    updatemode = npm;
-  }
-  // do this outside of the loop
-  int16_t tbx, tby;
-  uint16_t tbw, tbh;
-  // center update text
-  display1.getTextBounds(fullscreen, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t utx = ((display1.width() - tbw) / 2) - tbx;
-  uint16_t uty = ((display1.height() / 4) - tbh / 2) - tby;
-  // center update mode
-  display1.getTextBounds(updatemode, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t umx = ((display1.width() - tbw) / 2) - tbx;
-  uint16_t umy = ((display1.height() * 3 / 4) - tbh / 2) - tby;
-  // center HelloWorld
-  display1.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t hwx = ((display1.width() - tbw) / 2) - tbx;
-  uint16_t hwy = ((display1.height() - tbh) / 2) - tby;
+  u8g2Fonts.setFontMode(1);                   // use u8g2 transparent mode (this is default)
+  u8g2Fonts.setFontDirection(0);              // left to right (this is default)
+  u8g2Fonts.setForegroundColor(GxEPD_BLACK);  // apply Adafruit GFX color
+  u8g2Fonts.setBackgroundColor(GxEPD_WHITE);  // apply Adafruit GFX color
+  u8g2Fonts.setFont(u8g2_font_profont22_mf);  // select u8g2 font from here: https://github.com/olikraus/u8g2/wiki/fntlistall
   display1.firstPage();
   do
   {
-    display1.fillScreen(GxEPD_WHITE);
-    display1.setCursor(hwx, hwy);
-    display1.print(HelloWorld);
-    display1.setCursor(utx, uty);
-    display1.print(fullscreen);
-    display1.setCursor(umx, umy);
-    display1.print(updatemode);
-  } while (display1.nextPage());
-  Serial.println("helloFullScreenPartialMode done");
+    drawPage();
+  }
+  while (display1.nextPage());
+}
+
+void drawPage()
+{
+  display1.fillScreen(GxEPD_WHITE);
+  u8g2Fonts.setCursor(0, 0);
+  u8g2Fonts.println();
+  u8g2Fonts.println(" !\"#$%&'()*+,-./<=>?@");
+  u8g2Fonts.println("0123456789:;[\\]^_`{|}");
+  u8g2Fonts.println("ABCDEFGHIJKLMNOPQRSTU");
+  u8g2Fonts.println("VWXYZabcdefghijklmnop");
+  u8g2Fonts.println("qrstuvwxyz~");
+  u8g2Fonts.println("Umlaute: ÄÖÜäéöü");
 }
 
 void loop()
@@ -141,3 +119,4 @@ void loop()
   delay(500);
   Serial.println("Loop");
 }
+
